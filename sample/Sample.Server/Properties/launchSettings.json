@@ -1,0 +1,20 @@
+﻿{
+  "profiles": {
+    "Sample.Debug": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Debug",
+        "ASPNETCORE_URLS": "http://*:1001;http://*:1002",
+        "METRICS_HOST": "SAMPLE_HOST",
+        "METRICS_PORT": "1002",
+        "Loggers__Queue__Main__Level": "Info",
+        "Loggers__Queue__EventsPublisher__Level": "Debug",
+        "Loggers__Queue__EventsSubscriber__Level": "Debug",
+        "Loggers__Queue__LoggingMessagePublisherBehavior__Level": "Info",
+        "Loggers__Queue__LoggingMessageHandlerBehavior__Level": "Info"
+      }
+    }
+  }
+}
