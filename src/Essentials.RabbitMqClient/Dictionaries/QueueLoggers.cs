@@ -12,15 +12,15 @@ public static class QueueLoggers
     /// <summary>
     /// Основной логгер
     /// </summary>
-    public static Logger MainLogger { get; } = LogManager.GetLogger("Essentials.RabbtMq.Client.Main");
+    public static Logger MainLogger { get; } = LogManager.GetLogger("Essentials.RabbtMqClient.Main");
     
     /// <summary>
     /// Логгер для сервиса <see cref="IEventsPublisher" />
     /// </summary>
-    public static Logger EventsPublisherLogger { get; } = LogManager.GetLogger("Essentials.RabbtMq.Client.EventsPublisher");
+    public static Logger EventsPublisherLogger { get; } = LogManager.GetLogger("Essentials.RabbtMqClient.EventsPublisher");
     
     /// <summary>
     /// Логгер для сервиса <see cref="IEventsSubscriber" />
     /// </summary>
-    public static Logger EventsSubscriberLogger { get; } = LogManager.GetLogger("Essentials.RabbtMq.Client.EventsSubscriber");
+    public static Logger EventsSubscriberLogger { get; } = LogManager.GetLogger("Essentials.RabbtMqClient.EventsSubscriber");
 }
