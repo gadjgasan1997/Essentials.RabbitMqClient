@@ -80,16 +80,34 @@ internal static class ReflectionHelpers
         Type handlerDescriptionType,
         Type handlerImplementationType)
     {
-        /*// Получение и вызов метода
-        var method = typeof(ServiceCollectionDescriptorExtensions)
-            .GetMethodWithNameAndParams(
-                nameof(ServiceCollectionDescriptorExtensions.TryAddScoped),
-                paramTypes: new[] { typeof(IServiceCollection), typeof(Type), typeof(Type) });
+        var method = GetMethodWithNameAndParams(
+            typeof(ServiceCollectionDescriptorExtensions),
+            nameof(ServiceCollectionDescriptorExtensions.TryAddScoped),
+            paramTypes: [typeof(IServiceCollection), typeof(Type), typeof(Type)]);
 
         method
             .CheckNotNull()
             .Invoke(
                 obj: typeof(ServiceCollectionDescriptorExtensions),
-                parameters: new object?[] { services, handlerDescriptionType, handlerImplementationType });*/
+                parameters: [services, handlerDescriptionType, handlerImplementationType]);
+    }
+
+    private static MethodInfo? GetMethodWithNameAndParams(
+        Type staticType,
+        string methodName,
+        params Type[] paramTypes)
+    {
+        return staticType
+            .GetMethods()
+            .Where(methodInfo => methodInfo.Name == methodName)
+            .Where(Predicate)
+            .SingleOrDefault();
+
+        bool Predicate(MethodInfo method) =>
+            method
+                .GetParameters()
+                .Select<ParameterInfo, Type>(parameter => parameter.ParameterType)
+                .Select(type => !type.IsGenericType ? type : type.GetGenericTypeDefinition())
+                .SequenceEqual(paramTypes);
     }
 }
