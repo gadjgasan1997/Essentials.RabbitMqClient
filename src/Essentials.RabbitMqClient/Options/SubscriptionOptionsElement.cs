@@ -47,7 +47,12 @@ internal class SubscriptionOptionsElement
         public string TypeName { get; set; } = null!;
         
         /// <summary>
-        /// Полное название типа обработчика
+        /// Название типа ответа
+        /// </summary>
+        public string? ResponseTypeName { get; set; }
+        
+        /// <summary>
+        /// Название типа обработчика
         /// </summary>
         public string? HandlerTypeName { get; set; }
     

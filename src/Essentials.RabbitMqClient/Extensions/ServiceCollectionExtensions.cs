@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Essentials.RabbitMqClient.Context;
+﻿using Essentials.RabbitMqClient.Context;
 using Essentials.RabbitMqClient.Context.Implementations;
 using Essentials.RabbitMqClient.Dictionaries;
 using Essentials.RabbitMqClient.Metrics.Extensions;
@@ -105,42 +104,5 @@ public static class ServiceCollectionExtensions
         }
         
         return services;
-    }
-
-    /// <summary>
-    /// Регистрирует обработчик события
-    /// </summary>
-    /// <param name="services"></param>
-    /// <param name="subscriptionInfo"></param>
-    /// <param name="assemblies"></param>
-    /// <returns></returns>
-    private static void RegisterEventHandler(
-        this IServiceCollection services,
-        SubscriptionInfo subscriptionInfo,
-        Assembly[] assemblies)
-    {
-        if (string.IsNullOrWhiteSpace(subscriptionInfo.HandlerTypeName))
-        {
-            MainLogger.Warn(
-                $"Для события {subscriptionInfo.EventTypeName} не указан собственный обработчик - будет использован базовый");
-            
-            return;
-        }
-
-        if (subscriptionInfo.HandlerTypeName == typeof(RabbitMqEventHandler<>).FullName)
-        {
-            RegisterDefaultHandler(
-                services,
-                assemblies,
-                subscriptionInfo.EventTypeName);
-            
-            return;
-        }
-        
-        RegisterHandler(
-            services,
-            assemblies,
-            subscriptionInfo.EventTypeName,
-            subscriptionInfo.HandlerTypeName);
     }
 }

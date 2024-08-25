@@ -1,4 +1,5 @@
-﻿using Essentials.Serialization;
+﻿using System.Reflection;
+using Essentials.Serialization;
 using Essentials.Serialization.Serializers;
 using Essentials.Serialization.Deserializers;
 using Essentials.RabbitMqClient.Dictionaries;
@@ -28,6 +29,7 @@ public class Startup
         EssentialsDeserializersFactory.AddOrUpdateByKey(KnownRabbitMqDeserializers.XML, () => new XmlDeserializer());
         
         // Настройка существующих соединений с RabbitMq
+        services.AddMediatR(configuration => configuration.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
         services.ConfigureRabbitMqConnections(Configuration);
     }
 

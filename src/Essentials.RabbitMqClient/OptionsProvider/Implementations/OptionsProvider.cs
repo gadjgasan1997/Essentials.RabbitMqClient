@@ -197,6 +197,7 @@ internal class OptionsProvider : IOptionsProvider
                     options.Key.QueueKey,
                     options.Key.RoutingKey,
                     options.Value.EventTypeName,
+                    options.Value.ResponseTypeName,
                     options.Value.HandlerTypeName)));
 
     #region Private

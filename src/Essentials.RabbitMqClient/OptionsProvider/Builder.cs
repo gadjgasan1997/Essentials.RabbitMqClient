@@ -170,6 +170,7 @@ internal class Builder
 
             var subscriptionOptions = new SubscriptionOptions(
                 options.Options.TypeName,
+                options.Options.ResponseTypeName,
                 options.Options.HandlerTypeName,
                 contentType,
                 prefetchCount,

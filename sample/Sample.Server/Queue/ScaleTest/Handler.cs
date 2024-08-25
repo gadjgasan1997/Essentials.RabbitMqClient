@@ -1,9 +1,9 @@
-﻿using Essentials.RabbitMqClient;
-using Essentials.RabbitMqClient.Publisher;
+﻿using MediatR;
+using LanguageExt;
 
 namespace Sample.Server.Queue.ScaleTest;
 
-public class Handler : IEventHandler<Input>
+public class Handler : IRequestHandler<Input, Output>
 {
     private static readonly Dictionary<string, int> _map = new()
     {
@@ -11,21 +11,11 @@ public class Handler : IEventHandler<Input>
         ["Petr"] = 30
     };
     
-    private readonly IEventsPublisher _eventsPublisher;
-    
-    public Handler(IEventsPublisher eventsPublisher)
+    public Task<Output> Handle(Input request, CancellationToken cancellationToken)
     {
-        _eventsPublisher = eventsPublisher;
-    }
-    
-    public Task HandleAsync(Input @event)
-    {
-        _eventsPublisher.PublishRpcResponse(
-            new Output
-            {
-                Age = _map[@event.Name]
-            });
-
-        return Task.CompletedTask;
+        return new Output
+        {
+            Age = _map[request.Name]
+        }.AsTask();
     }
 }

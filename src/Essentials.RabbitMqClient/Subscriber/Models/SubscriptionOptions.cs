@@ -6,6 +6,7 @@ namespace Essentials.RabbitMqClient.Subscriber.Models;
 /// Опции подписки на очередь
 /// </summary>
 /// <param name="EventTypeName">Название типа события</param>
+/// <param name="ResponseTypeName">Название типа ответа</param>
 /// <param name="HandlerTypeName">Тип обработчика сообщения</param>
 /// <param name="ContentType">Тип содержимого сообщения</param>
 /// <param name="PrefetchCount">Количество сообщений, которое может забрать подписчик</param>
@@ -13,6 +14,7 @@ namespace Essentials.RabbitMqClient.Subscriber.Models;
 /// <param name="Behaviors">Список перехватчиков сообщения</param>
 internal record SubscriptionOptions(
     string EventTypeName,
+    string? ResponseTypeName,
     string? HandlerTypeName,
     string ContentType,
     ushort PrefetchCount,
@@ -23,6 +25,11 @@ internal record SubscriptionOptions(
     /// Название типа события
     /// </summary>
     public string EventTypeName { get; } = EventTypeName.CheckNotNullOrEmpty();
+    
+    /// <summary>
+    /// Название типа ответа
+    /// </summary>
+    public string? ResponseTypeName { get; } = ResponseTypeName?.FullTrim();
     
     /// <summary>
     /// Название типа обработчика события
