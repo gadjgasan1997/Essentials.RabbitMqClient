@@ -21,7 +21,7 @@
 
     <PropertyGroup>
         <PackageId>Essentials.RabbitMqClient</PackageId>
-        <Version>1.0.3.0</Version>
+        <Version>1.0.4.0</Version>
         <Authors>Gadzhinskiy</Authors>
         <Company>Gadzhinskiy</Company>
         <Product>Essentials.RabbitMqClient</Product>
