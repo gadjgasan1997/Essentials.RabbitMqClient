@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Essentials.Utils.Extensions;
 using Essentials.RabbitMqClient.Helpers;
 
 namespace Essentials.RabbitMqClient.Models;
@@ -12,10 +13,7 @@ public record RoutingKey
 
     private RoutingKey(string key)
     {
-        Key = key;
-        
-        if (Key.Contains(HOST_NAME))
-            Key = Key.Replace(HOST_NAME, EnvironmentHelpers.GetHostName());
+        Key = key.CheckNotNullOrEmpty().ReplaceEnvironmentVariables();
     }
     
     /// <summary>

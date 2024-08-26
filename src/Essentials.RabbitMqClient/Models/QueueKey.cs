@@ -13,10 +13,7 @@ public record QueueKey
     
     private QueueKey(string queueName)
     {
-        QueueName = queueName.CheckNotNullOrEmpty();
-
-        if (QueueName.Contains(HOST_NAME))
-            QueueName = QueueName.Replace(HOST_NAME, EnvironmentHelpers.GetHostName());
+        QueueName = queueName.CheckNotNullOrEmpty().ReplaceEnvironmentVariables();
     }
     
     /// <summary>

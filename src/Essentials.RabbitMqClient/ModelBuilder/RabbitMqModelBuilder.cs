@@ -128,7 +128,7 @@ internal class RabbitMqModelBuilder
     /// <returns></returns>
     private void SubscribeToEvents()
     {
-        var assemblies = AssemblyHelpers.GetAllAssembliesWithReferences().ToArray();
+        var assemblies = AssemblyHelpers.GetCurrentDomainAssemblies().ToArray();
 
         foreach (var (connectionKey, subscriptionsInfo) in _provider.GetSubscriptionsInfo())
         {
