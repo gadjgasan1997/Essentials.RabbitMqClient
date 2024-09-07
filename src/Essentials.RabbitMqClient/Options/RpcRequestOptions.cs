@@ -7,9 +7,9 @@ using System.ComponentModel.DataAnnotations;
 namespace Essentials.RabbitMqClient.Options;
 
 /// <summary>
-/// Опции публикации событий
+/// Опции Rpc запроса
 /// </summary>
-internal class PublishOptionsElement
+internal class RpcRequestOptions
 {
     /// <summary>
     /// Ключ публикации
@@ -38,7 +38,8 @@ internal class PublishOptionsElement
         /// <summary>
         /// Ключ маршрутизации
         /// </summary>
-        public string? RoutingKey { get; set; }
+        [Required]
+        public string RoutingKey { get; set; } = null!;
     }
 
     public class ValueElement
@@ -57,6 +58,17 @@ internal class PublishOptionsElement
         /// Режим доставки сообщения
         /// </summary>
         public byte? DeliveryMode { get; set; }
+
+        /// <summary>
+        /// Ключ маршрутизации для отправки ответов
+        /// </summary>
+        [Required]
+        public string ReplyTo { get; set; } = null!;
+
+        /// <summary>
+        /// Время ожидания ответов
+        /// </summary>
+        public int Timeout { get; set; }
         
         /// <summary>
         /// Список перехватчиков сообщения

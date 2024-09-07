@@ -11,10 +11,10 @@ public record EventKey
 {
     private EventKey(string? eventTypeName)
     {
-        EventTypeName = eventTypeName
-            .CheckNotNullOrEmpty($"Название типа события для ключа не может быть пустым: '{eventTypeName}'")
-            .FullTrim()
-            .ToLowerInvariant();
+        eventTypeName.CheckNotNullOrEmpty(
+            $"Название типа события для ключа не может быть пустым: '{eventTypeName}'");
+        
+        EventTypeName = eventTypeName.FullTrim()!.ToLowerInvariant();
     }
     
     /// <summary>

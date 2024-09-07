@@ -1,15 +1,14 @@
-﻿using Essentials.Utils.Extensions;
+﻿using RabbitMQ.Client.Events;
+using Microsoft.Extensions.Logging;
+using Essentials.Utils.Extensions;
 using Essentials.RabbitMqClient.Context;
 using Essentials.RabbitMqClient.Exceptions;
 using Essentials.RabbitMqClient.Extensions;
-using RabbitMQ.Client.Events;
-using Essentials.RabbitMqClient.OptionsProvider;
 using Essentials.RabbitMqClient.RabbitMqConnections;
 using Essentials.RabbitMqClient.Subscriber.MessageProcessing;
 using Essentials.RabbitMqClient.Subscriber.Models;
 using static System.Environment;
 using static Essentials.Serialization.Helpers.JsonHelpers;
-using static Essentials.RabbitMqClient.Dictionaries.QueueLoggers;
 
 namespace Essentials.RabbitMqClient.Subscriber.Implementations;
 
@@ -20,17 +19,20 @@ internal class EventsSubscriber : IEventsSubscriber
     private readonly IOptionsProvider _optionsProvider;
     private readonly IContextService _contextService;
     private readonly IEventsHandlerService _eventsHandlerService;
+    private readonly ILogger _logger;
     
     public EventsSubscriber(
         IChannelFactory channelFactory,
         IOptionsProvider optionsProvider,
         IContextService contextService,
-        IEventsHandlerService eventsHandlerService)
+        IEventsHandlerService eventsHandlerService,
+        ILoggerFactory loggerFactory)
     {
         _channelFactory = channelFactory.CheckNotNull();
         _optionsProvider = optionsProvider.CheckNotNull();
         _contextService = contextService.CheckNotNull();
         _eventsHandlerService = eventsHandlerService.CheckNotNull();
+        _logger = loggerFactory.CreateLogger("Essentials.RabbtMqClient.EventsSubscriber");
     }
     
     /// <inheritdoc cref="IEventsSubscriber.Subscribe{TEvent}" />
@@ -48,7 +50,7 @@ internal class EventsSubscriber : IEventsSubscriber
         var connectionKey = subscriptionParams.ConnectionKey;
         if (_eventsHandlerService.TryGetHandler(connectionKey, subscriptionKey, out _))
         {
-            EventsSubscriberLogger.Warn(
+            _logger.LogWarning(
                 $"Для очереди '{queueKey}' уже имеется подписка на событие с ключом '{subscriptionKey}'." +
                 $"{NewLine}Опции подписки: '{Serialize(options)}'.");
             
@@ -63,7 +65,7 @@ internal class EventsSubscriber : IEventsSubscriber
         // Добавление обработчика
         _eventsHandlerService.RegisterEventHandler<TEvent>(connectionKey, subscriptionKey, options);
 
-        EventsSubscriberLogger.Info(
+        _logger.LogInformation(
             $"Произошла подписка на событие с ключом '{subscriptionKey}'." +
             $"{NewLine}Опции подписки: '{Serialize(options)}'.");
     }
@@ -77,7 +79,7 @@ internal class EventsSubscriber : IEventsSubscriber
     {
         if (sender is not AsyncEventingBasicConsumer consumer)
         {
-            EventsSubscriberLogger.Error(
+            _logger.LogError(
                 $"Слушатель не является типом '{typeof(AsyncEventingBasicConsumer).FullName}'" +
                 $"{NewLine}Аргументы: '{Serialize(eventArgs)}'");
 
@@ -90,7 +92,7 @@ internal class EventsSubscriber : IEventsSubscriber
             out var connectionKey,
             out var subscriptionKey))
         {
-            EventsSubscriberLogger.Error(
+            _logger.LogError(
                 $"Не удалось определить ключ подписки для слушателя: '{Serialize(consumer)}'" +
                 $"{NewLine}Аргументы: '{Serialize(eventArgs)}'");
 
@@ -111,13 +113,13 @@ internal class EventsSubscriber : IEventsSubscriber
         }
         catch (HandlerNotFoundException exception)
         {
-            EventsSubscriberLogger.Warn(
+            _logger.LogWarning(
                 exception,
                 $"Для события с ключом '{subscriptionKey}' не найден обработчик.");
         }
         catch (Exception exception)
         {
-            EventsSubscriberLogger.Error(
+            _logger.LogError(
                 exception,
                 $"Во время обработки сообщения из очереди '{eventArgs.ConsumerTag}' " +
                 $"с ключом маршрутизации '{eventArgs.RoutingKey}' произошло исключение." +

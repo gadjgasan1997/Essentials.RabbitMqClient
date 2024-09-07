@@ -11,10 +11,10 @@ public record ConnectionKey
 {
     private ConnectionKey(string? connectionName)
     {
-        ConnectionName = connectionName
-            .CheckNotNullOrEmpty($"Название соединения для ключа не может быть пустым: '{connectionName}'")
-            .FullTrim()
-            .ToLowerInvariant();
+        connectionName.CheckNotNullOrEmpty(
+            $"Название соединения для ключа не может быть пустым: '{connectionName}'");
+        
+        ConnectionName = connectionName.FullTrim()!.ToLowerInvariant();
     }
     
     /// <summary>

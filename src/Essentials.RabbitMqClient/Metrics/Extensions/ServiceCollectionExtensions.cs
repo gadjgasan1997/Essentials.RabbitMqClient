@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Essentials.RabbitMqClient.Metrics.Implementations;
 
 namespace Essentials.RabbitMqClient.Metrics.Extensions;
@@ -17,7 +16,7 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureMetricsService(
         this IServiceCollection services)
     {
-        // todo реализовать отдуча метрик
+        // todo реализовать отдачу метрик
         return services.ConfigureMockMetrics();
     }
 
@@ -28,7 +27,7 @@ internal static class ServiceCollectionExtensions
     /// <returns></returns>
     private static IServiceCollection ConfigureMockMetrics(this IServiceCollection services)
     {
-        services.TryAddSingleton<IMetricsService, MockMetricsService>();
+        services.AddSingleton<IMetricsService, MockMetricsService>();
         return services;
     }
 }

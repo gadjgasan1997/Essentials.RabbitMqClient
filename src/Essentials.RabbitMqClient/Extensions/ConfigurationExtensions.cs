@@ -1,6 +1,6 @@
-﻿using Essentials.RabbitMqClient.Exceptions;
+﻿using Microsoft.Extensions.Configuration;
+using Essentials.RabbitMqClient.Exceptions;
 using Essentials.RabbitMqClient.Options;
-using Microsoft.Extensions.Configuration;
 using Essentials.Utils.Reflection.Extensions;
 
 namespace Essentials.RabbitMqClient.Extensions;

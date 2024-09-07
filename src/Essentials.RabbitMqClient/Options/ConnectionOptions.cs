@@ -68,27 +68,7 @@ internal class ConnectionOptions
     public TimeSpan? RequestedHeartbeat { get; set; }
     
     /// <summary>
-    /// Опции очередей
+    /// Опции моделей
     /// </summary>
-    public List<QueueOptions> Queues { get; set; } = new();
-
-    /// <summary>
-    /// Опции обменников
-    /// </summary>
-    public List<ExchangeOptions> Exchanges { get; set; } = new();
-
-    /// <summary>
-    /// Опции подписок на очереди
-    /// </summary>
-    public List<SubscriptionOptionsElement> SubscriptionsOptions { get; set; } = new();
-
-    /// <summary>
-    /// Опции публикации сообщений
-    /// </summary>
-    public List<PublishOptionsElement> PublishOptions { get; set; } = new();
-
-    /// <summary>
-    /// Опции Rpc запросов
-    /// </summary>
-    public List<RpcRequestOptionsElement> RpcRequestsOptions { get; set; } = new();
+    public ModelOptions? Model { get; set; }
 }

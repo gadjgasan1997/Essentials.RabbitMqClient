@@ -93,7 +93,7 @@ internal class ChannelFactory : IChannelFactory, IDisposable
         [NotNullWhen(true)] out ConnectionKey? connectionKey,
         [NotNullWhen(true)] out SubscriptionKey? subscriptionKey)
     {
-        var keys = consumerTags.Concat(new[] { routingKey });
+        var keys = consumerTags.Concat([routingKey]);
         
         var pair = _consumersToKeysMap.FirstOrDefault(pair => pair.Key.SetEquals(keys));
         connectionKey = pair.Value.Item1;

@@ -2,25 +2,24 @@
 using Essentials.Utils.Extensions;
 using Essentials.Serialization;
 using System.Net.Sockets;
-using System.Diagnostics.CodeAnalysis;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using LanguageExt.Common;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics.CodeAnalysis;
 using Essentials.RabbitMqClient.Extensions;
 using Essentials.RabbitMqClient.Dictionaries;
 using Essentials.RabbitMqClient.Exceptions;
 using Essentials.RabbitMqClient.Models;
 using Essentials.RabbitMqClient.Context;
-using Essentials.RabbitMqClient.OptionsProvider;
 using Essentials.RabbitMqClient.Publisher.Models;
 using Essentials.RabbitMqClient.RabbitMqConnections;
 using Essentials.RabbitMqClient.Publisher.MessageProcessing;
 using SubscribeMessageContext = Essentials.RabbitMqClient.Subscriber.MessageProcessing.MessageContext;
 using PublishMessageContext = Essentials.RabbitMqClient.Publisher.MessageProcessing.MessageContext;
-using static LanguageExt.Prelude;
 using static System.Environment;
+using static LanguageExt.Prelude;
 using static Essentials.Serialization.Helpers.JsonHelpers;
-using static Essentials.RabbitMqClient.Dictionaries.QueueLoggers;
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
 namespace Essentials.RabbitMqClient.Publisher.Implementations;
@@ -34,19 +33,22 @@ internal class EventsPublisher : IEventsPublisher
     private readonly IAskManager _askManager;
     private readonly IContextService _contextService;
     private readonly IEnumerable<IMessagePublishBehavior> _behaviors;
+    private readonly ILogger _logger;
 
     public EventsPublisher(
         IChannelFactory channelFactory,
         IOptionsProvider optionsProvider,
         IAskManager askManager,
         IContextService contextService,
-        IEnumerable<IMessagePublishBehavior> behaviors)
+        IEnumerable<IMessagePublishBehavior> behaviors,
+        ILoggerFactory loggerFactory)
     {
         _channelFactory = channelFactory.CheckNotNull();
         _provider = optionsProvider.CheckNotNull();
         _askManager = askManager.CheckNotNull();
         _contextService = contextService.CheckNotNull();
         _behaviors = behaviors;
+        _logger = loggerFactory.CreateLogger("Essentials.RabbtMqClient.EventsPublisher");
     }
 
     /// <inheritdoc cref="IEventsPublisher.Publish{TEvent}(TEvent)" />
@@ -187,10 +189,10 @@ internal class EventsPublisher : IEventsPublisher
                 return (TAnswer) result;
             })
             .Map(result => new Result<TAnswer>(result))
-            .IfFail(error =>
+            .IfFail(exception =>
             {
-                EventsPublisherLogger.Warn(error, "Произошла ошибка при попытке получить ответ из очереди");
-                return new Result<TAnswer>(error);
+                _logger.LogWarning(exception, "Произошла ошибка при попытке получить ответ из очереди");
+                return new Result<TAnswer>(exception);
             });
     }
 
@@ -226,13 +228,13 @@ internal class EventsPublisher : IEventsPublisher
                 return (TAnswer) result;
             })
             .Map(result => new Result<TAnswer>(result))
-            .IfFail(error =>
+            .IfFail(exception =>
             {
-                EventsPublisherLogger.Warn(
-                    error,
+                _logger.LogWarning(
+                    exception,
                     $"Произошла ошибка при попытке получить ответ из очереди с параметрами: {Serialize(publishParams)}");
 
-                return new Result<TAnswer>(error);
+                return new Result<TAnswer>(exception);
             });
     }
 
@@ -256,7 +258,7 @@ internal class EventsPublisher : IEventsPublisher
                     .Register(() =>
                     {
                         if (tcs.Task.IsCompleted) return;
-                        EventsPublisherLogger.Info($"Получен токен отмены: сообщение '{correlationId}' будет удалено.");
+                        _logger.LogInformation($"Получен токен отмены: сообщение '{correlationId}' будет удалено.");
 
                         _ = _askManager
                             .Cancel(
@@ -341,7 +343,7 @@ internal class EventsPublisher : IEventsPublisher
         return serializer.Serialize(@event);
     }
 
-    private static void PublishWithPolicy(
+    private void PublishWithPolicy(
         IModel channel,
         byte[] message,
         PublishKey publishKey,
@@ -355,9 +357,10 @@ internal class EventsPublisher : IEventsPublisher
             .WaitAndRetry(
                 retryCount: retryCount,
                 sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                onRetry: (ex, time) =>
+                onRetry: (exception, time) =>
                 {
-                    EventsPublisherLogger.Error(ex,
+                    _logger.LogError(
+                        exception,
                         $"Не удалось опубликовать сообщение по происшествии {time.TotalSeconds:n1} секунд." +
                         $"{NewLine}Exhange: '{publishKey.Exchange}'." +
                         $"{NewLine}Routing key: '{publishKey.RoutingKey?.Key}'.");

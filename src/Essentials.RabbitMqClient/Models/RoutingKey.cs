@@ -9,8 +9,6 @@ namespace Essentials.RabbitMqClient.Models;
 /// </summary>
 public record RoutingKey
 {
-    private const string HOST_NAME = "{host_name}";
-
     private RoutingKey(string key)
     {
         Key = key.CheckNotNullOrEmpty().ReplaceEnvironmentVariables();

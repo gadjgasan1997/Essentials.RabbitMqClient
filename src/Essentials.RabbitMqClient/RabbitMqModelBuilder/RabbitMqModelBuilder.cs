@@ -1,35 +1,25 @@
 ﻿using RabbitMQ.Client;
 using Essentials.Utils.Extensions;
-using Essentials.Utils.Reflection.Helpers;
 using Essentials.RabbitMqClient.Models;
-using Essentials.RabbitMqClient.OptionsProvider;
 using Essentials.RabbitMqClient.RabbitMqConnections;
-using Essentials.RabbitMqClient.Subscriber;
-using Essentials.RabbitMqClient.Subscriber.Extensions;
-using Essentials.RabbitMqClient.Subscriber.Models;
 using static Essentials.RabbitMqClient.Dictionaries.QueueLoggers;
 
-namespace Essentials.RabbitMqClient.ModelBuilder;
+namespace Essentials.RabbitMqClient.RabbitMqModelBuilder;
 
 /// <summary>
 /// Билдер для создания моделей RabbitMq
 /// </summary>
 internal class RabbitMqModelBuilder
 {
-    private static uint _isConfigured;
-    
     private readonly IOptionsProvider _provider;
     private readonly IRabbitMqConnectionFactory _factory;
-    private readonly IEventsSubscriber _eventsSubscriber;
 
     public RabbitMqModelBuilder(
         IOptionsProvider provider,
-        IRabbitMqConnectionFactory factory,
-        IEventsSubscriber eventsSubscriber)
+        IRabbitMqConnectionFactory factory)
     {
         _provider = provider.CheckNotNull();
         _factory = factory.CheckNotNull();
-        _eventsSubscriber = eventsSubscriber.CheckNotNull();
     }
     
     /// <summary>
@@ -37,13 +27,8 @@ internal class RabbitMqModelBuilder
     /// </summary>
     public void RegisterRabbitMqModels()
     {
-        if (Interlocked.Exchange(ref _isConfigured, 1) == 1)
-            return;
-        
         foreach (var pair in _factory.GetAllConnections())
             RegisterConnectionRabbitMqModels(pair.Key, pair.Value);
-        
-        SubscribeToEvents();
     }
 
     /// <summary>
@@ -64,6 +49,8 @@ internal class RabbitMqModelBuilder
             MainLogger.Error(
                 exception,
                 $"Во время регистрации моделей RabbitMq для соединения с ключом '{connectionKey}' произошло исключение.");
+
+            throw;
         }
     }
 
@@ -119,28 +106,6 @@ internal class RabbitMqModelBuilder
             
             using var channel = connection.CreateModel();
             channel.ExchangeDeclare(exchange.Name, exchange.Type, exchange.Durable, exchange.AutoDelete);
-        }
-    }
-
-    /// <summary>
-    /// Подписывается на события
-    /// </summary>
-    /// <returns></returns>
-    private void SubscribeToEvents()
-    {
-        var assemblies = AssemblyHelpers.GetCurrentDomainAssemblies().ToArray();
-
-        foreach (var (connectionKey, subscriptionsInfo) in _provider.GetSubscriptionsInfo())
-        {
-            foreach (var subscriptionInfo in subscriptionsInfo)
-            {
-                var @params = new SubscriptionParams(
-                    connectionKey,
-                    subscriptionInfo.QueueName,
-                    subscriptionInfo.RoutingKey);
-
-                _eventsSubscriber.SubscribeToEvent(@params, assemblies, subscriptionInfo.EventTypeName);
-            }
         }
     }
 }

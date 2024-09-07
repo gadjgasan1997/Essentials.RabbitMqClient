@@ -1,7 +1,6 @@
-﻿using Essentials.RabbitMqClient.Models;
-using Essentials.RabbitMqClient.Subscriber.MessageProcessing;
+﻿using RabbitMQ.Client.Events;
+using Essentials.RabbitMqClient.Models;
 using Essentials.RabbitMqClient.Subscriber.Models;
-using RabbitMQ.Client.Events;
 
 namespace Essentials.RabbitMqClient.Subscriber;
 

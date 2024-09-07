@@ -33,7 +33,7 @@ public interface IEventsPublisher
     /// <summary>
     /// Публикует сообщение в очередь и ждет асинхронно ответ
     /// </summary>
-    /// <remarks>Timeout задается через <see cref="Options.PublishOptionsElement.Options"/></remarks>
+    /// <remarks>Timeout задается через <see cref="Options.PublishOptions.Options"/></remarks>
     /// <param name="event">Событие</param>
     /// <param name="token">Токен отмены</param>
     /// <typeparam name="TEvent">Тип события</typeparam>
@@ -45,7 +45,7 @@ public interface IEventsPublisher
     /// <summary>
     /// Публикует сообщение в очередь и ждет асинхронно ответ
     /// </summary>
-    /// <remarks>Timeout задается через <see cref="Options.PublishOptionsElement.Options"/></remarks>
+    /// <remarks>Timeout задается через <see cref="Options.PublishOptions.Options"/></remarks>
     /// <param name="event">Событие</param>
     /// <param name="publishParams">Параметры публикации сообщения</param>
     /// <param name="token">Токен отмены</param>

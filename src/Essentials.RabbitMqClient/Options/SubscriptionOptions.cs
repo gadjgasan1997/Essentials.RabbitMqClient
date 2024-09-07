@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel.DataAnnotations;
-
 // ReSharper disable ClassNeverInstantiated.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
@@ -11,7 +10,7 @@ namespace Essentials.RabbitMqClient.Options;
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 [SuppressMessage("ReSharper", "CollectionNeverUpdated.Global")]
-internal class SubscriptionOptionsElement
+internal class SubscriptionOptions
 {
     /// <summary>
     /// Ключ подписки

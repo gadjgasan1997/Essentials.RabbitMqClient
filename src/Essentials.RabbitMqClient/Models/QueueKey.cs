@@ -9,8 +9,6 @@ namespace Essentials.RabbitMqClient.Models;
 /// </summary>
 public record QueueKey
 {
-    private const string HOST_NAME = "{host_name}";
-    
     private QueueKey(string queueName)
     {
         QueueName = queueName.CheckNotNullOrEmpty().ReplaceEnvironmentVariables();

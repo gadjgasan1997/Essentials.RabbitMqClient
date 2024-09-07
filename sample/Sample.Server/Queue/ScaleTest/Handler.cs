@@ -15,7 +15,7 @@ public class Handler : IRequestHandler<Input, Output>
     {
         return new Output
         {
-            Age = _map[request.Name]
+            Age = _map.GetValueOrDefault(request.Name, -1)
         }.AsTask();
     }
 }
