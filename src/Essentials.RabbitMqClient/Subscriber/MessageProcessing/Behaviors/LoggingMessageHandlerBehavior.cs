@@ -121,7 +121,7 @@ public class LoggingMessageHandlerBehavior : IMessageHandlerBehavior
     /// </summary>
     /// <param name="context">Контекст обрабатываемого сообщения</param>
     /// <returns>Логгер</returns>
-    protected virtual ILogger GetLogger(MessageContext.Context context)
+    private ILogger GetLogger(MessageContext.Context context)
     {
         var connectionKey = context.ConnectionKey;
         var subscriptionKey = context.SubscriptionKey;
@@ -130,12 +130,23 @@ public class LoggingMessageHandlerBehavior : IMessageHandlerBehavior
             (connectionKey, subscriptionKey),
             _ =>
             {
-                var loggerName = $"Essentials.RabbitMqClient.HandleMessageBehavior." +
-                                 $"{connectionKey.ConnectionName}." +
-                                 $"{subscriptionKey.QueueKey.QueueName}." +
-                                 $"{subscriptionKey.RoutingKey.Key}";
-
+                var loggerName = GetLoggerName(context);
                 return _factory.CreateLogger(loggerName);
             });
+    }
+    
+    /// <summary>
+    /// Возвращает название логгера
+    /// </summary>
+    /// <param name="context">Контекст сообщения</param>
+    /// <returns>Название логгера</returns>
+    protected virtual string GetLoggerName(MessageContext.Context context)
+    {
+        var connectionKey = context.ConnectionKey;
+        var subscriptionKey = context.SubscriptionKey;
+
+        return $"Essentials.RabbitMqClient.HandleMessageBehavior." +
+               $"{connectionKey.ConnectionName}." +
+               $"{subscriptionKey.RoutingKey.Key}";
     }
 }

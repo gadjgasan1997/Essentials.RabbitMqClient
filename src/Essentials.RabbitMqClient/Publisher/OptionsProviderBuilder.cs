@@ -184,7 +184,7 @@ internal static class OptionsProviderBuilder
             
             var replyTo = RoutingKey.New(options.Options.ReplyTo);
 
-            var timeout = TimeSpan.FromSeconds(options.Options.Timeout);
+            var timeout = TimeSpan.FromSeconds(options.Options.Timeout ?? 30);
             
             var contentType = string.IsNullOrWhiteSpace(options.Options.ContentType)
                 ? MessageContentType.JSON

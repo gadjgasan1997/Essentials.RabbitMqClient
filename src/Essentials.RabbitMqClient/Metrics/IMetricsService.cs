@@ -6,7 +6,7 @@ namespace Essentials.RabbitMqClient.Metrics;
 /// <summary>
 /// Сервис управления метриками
 /// </summary>
-internal interface IMetricsService
+public interface IMetricsService
 {
     /// <summary>
     /// Запускает таймер обработки события

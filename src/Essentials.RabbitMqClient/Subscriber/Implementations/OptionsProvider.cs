@@ -1,5 +1,6 @@
 ﻿using Essentials.RabbitMqClient.Models;
 using Essentials.RabbitMqClient.Subscriber.Models;
+// ReSharper disable ConvertToLambdaExpression
 
 namespace Essentials.RabbitMqClient.Subscriber.Implementations;
 
@@ -40,10 +41,8 @@ internal class OptionsProvider : IOptionsProvider
         return _connectionsOptions
             .SelectMany(options => options.Value.SubscriptionsOptionsMap)
             .Select(options => options.Value)
-            .Select(options =>
-                new RegisterEventsHandlersOptions(
-                    options.EventTypeName,
-                    options.HandlerTypeName));
+            .Where(options => !options.NeedCorrelation)
+            .Select(options => new RegisterEventsHandlersOptions(options.EventTypeName, options.HandlerType!));
     }
 
     /// <inheritdoc cref="IOptionsProvider.GetSubscriptionsInfo" />

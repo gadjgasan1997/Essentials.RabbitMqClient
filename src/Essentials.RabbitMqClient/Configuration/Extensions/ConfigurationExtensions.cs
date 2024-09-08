@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Essentials.RabbitMqClient.Exceptions;
+using Essentials.RabbitMqClient.Extensions;
 using Essentials.RabbitMqClient.Options;
 using Essentials.Utils.Reflection.Extensions;
 
-namespace Essentials.RabbitMqClient.Extensions;
+namespace Essentials.RabbitMqClient.Configuration.Extensions;
 
 /// <summary>
 /// Методы расширения для <see cref="IConfiguration" />

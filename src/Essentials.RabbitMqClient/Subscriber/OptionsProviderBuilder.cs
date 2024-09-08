@@ -8,6 +8,7 @@ using Essentials.RabbitMqClient.Options;
 using Essentials.RabbitMqClient.Subscriber.Implementations;
 using Essentials.RabbitMqClient.Subscriber.Models;
 using static System.Environment;
+using static System.StringComparison;
 using static Essentials.Serialization.Helpers.JsonHelpers;
 using static Essentials.RabbitMqClient.Dictionaries.QueueLoggers;
 using SubscriptionOptions = Essentials.RabbitMqClient.Subscriber.Models.SubscriptionOptions;
@@ -56,7 +57,10 @@ internal static class OptionsProviderBuilder
         List<Essentials.RabbitMqClient.Options.SubscriptionOptions> subscriptionOptions,
         Assembly[] assemblies)
     {
-        var subscriptionsOptionsMap = GetSubscriptionsOptions(connectionName, subscriptionOptions, assemblies);
+        var subscriptionsOptionsMap = GetSubscriptionsOptions(
+            connectionName,
+            subscriptionOptions,
+            assemblies);
         
         var connectionKey = ConnectionKey.New(connectionName);
         provider.AddConnectionOptions(connectionKey, subscriptionsOptionsMap);
@@ -122,16 +126,46 @@ internal static class OptionsProviderBuilder
             var prefetchCount = options.Options.PrefetchCount ?? 5;
 
             var behaviors = GetBehaviors(assemblies, options.Options.Behaviors).Distinct().ToList();
-
-            var newSubscriptionOptions = new SubscriptionOptions(
-                options.Options.TypeName,
-                options.Options.HandlerTypeName,
-                contentType,
-                prefetchCount,
-                options.Options.Correlation ?? false,
-                behaviors);
             
-            subscriptionsOptionsMap.Add(subscriptionKey, newSubscriptionOptions);
+            if (options.Options.Correlation.HasValue && options.Options.Correlation.Value)
+            {
+                subscriptionsOptionsMap.Add(
+                    subscriptionKey,
+                    new SubscriptionOptions(
+                        options.Options.TypeName,
+                        contentType,
+                        prefetchCount,
+                        behaviors));
+                
+                continue;
+            }
+
+            var handlerType = options.Options switch
+            {
+                {HandlerType: { } type} => type,
+
+                { } _ when string.IsNullOrWhiteSpace(options.Options.HandlerTypeName) =>
+                    throw new InvalidConfigurationException(
+                        $"Для события с ключом '{subscriptionKey}' не указано название обработчика"),
+
+                _ => assemblies.GetTypeByName(options.Options.HandlerTypeName, InvariantCultureIgnoreCase)
+            };
+
+            if (handlerType.IsGenericTypeDefinition)
+            {
+                throw new InvalidConfigurationException(
+                    $"Для события с ключом '{subscriptionKey}' в качестве обработчика указан открытый тип. " +
+                    $"Обработчиком должен выступать тип с закрытыми generic параметрами. Указанный обработчик: '{handlerType.FullName}'.");
+            }
+            
+            subscriptionsOptionsMap.Add(
+                subscriptionKey,
+                new SubscriptionOptions(
+                    options.Options.TypeName,
+                    handlerType,
+                    contentType,
+                    prefetchCount,
+                    behaviors));
         }
 
         return subscriptionsOptionsMap;
@@ -163,7 +197,7 @@ internal static class OptionsProviderBuilder
     {
         try
         {
-            return assemblies.GetTypeByName(behaviorTypeName, StringComparison.InvariantCultureIgnoreCase);
+            return assemblies.GetTypeByName(behaviorTypeName, InvariantCultureIgnoreCase);
         }
         catch (Exception exception)
         {

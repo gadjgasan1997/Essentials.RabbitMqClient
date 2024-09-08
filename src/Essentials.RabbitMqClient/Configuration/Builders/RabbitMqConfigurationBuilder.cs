@@ -1,33 +1,49 @@
-﻿using Essentials.RabbitMqClient.Publisher.MessageProcessing;
+﻿using Essentials.Utils.Extensions;
+using Essentials.RabbitMqClient.Publisher.MessageProcessing;
 using Essentials.RabbitMqClient.Publisher.MessageProcessing.Behaviors;
 using Essentials.RabbitMqClient.Subscriber.MessageProcessing;
 using Essentials.RabbitMqClient.Subscriber.MessageProcessing.Behaviors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Microsoft.Extensions.DependencyInjection.ServiceLifetime;
-
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Essentials.RabbitMqClient;
+namespace Essentials.RabbitMqClient.Configuration.Builders;
 
 /// <summary>
 /// Билдер конфигурации RabbitMq
 /// </summary>
 public class RabbitMqConfigurationBuilder
 {
-    private static readonly List<ServiceDescriptor> _messageHandlerBehaviors = new();
+    private static readonly List<ServiceDescriptor> _messageHandlerBehaviors = [];
     
-    private static readonly List<ServiceDescriptor> _messagePublisherBehaviors = new();
+    private static readonly List<ServiceDescriptor> _messagePublisherBehaviors = [];
     
     internal RabbitMqConfigurationBuilder()
     { }
+    
+    /// <summary>
+    /// Настраивает соединение с RabbitMq
+    /// </summary>
+    /// <param name="connectionName">Название соединения</param>
+    /// <param name="configureConnection">Делегат конфигурации соединения</param>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
+    public RabbitMqConfigurationBuilder ConfigureConnection(
+        string connectionName,
+        Action<ConnectionBuilder> configureConnection)
+    {
+        configureConnection.CheckNotNull("Делегат конфигурации соединения RabbitMq не может быть пустым");
+        configureConnection(new ConnectionBuilder(connectionName));
+        
+        return this;
+    }
 
     /// <summary>
     /// Добавляет перехватчик обработки сообщения
     /// </summary>
     /// <param name="lifetime">Время жизни</param>
     /// <typeparam name="TBehavior">Перехватчик</typeparam>
-    /// <returns>Билдер</returns>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
     public RabbitMqConfigurationBuilder AddMessageHandlerBehavior<TBehavior>(ServiceLifetime? lifetime = Singleton)
         where TBehavior : IMessageHandlerBehavior
     {
@@ -43,14 +59,14 @@ public class RabbitMqConfigurationBuilder
     /// <summary>
     /// Добавляет перехватчик обработки сообщения для сбора логов
     /// </summary>
-    /// <returns>Билдер</returns>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
     internal RabbitMqConfigurationBuilder AddLoggingMessageHandlerBehavior() =>
         AddMessageHandlerBehavior<LoggingMessageHandlerBehavior>();
 
     /// <summary>
     /// Добавляет перехватчик обработки сообщения для сбора метрик
     /// </summary>
-    /// <returns>Билдер</returns>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
     internal RabbitMqConfigurationBuilder AddMetricsMessageHandlerBehavior() =>
         AddMessageHandlerBehavior<MetricsMessageHandlerBehavior>();
 
@@ -59,7 +75,7 @@ public class RabbitMqConfigurationBuilder
     /// </summary>
     /// <param name="lifetime">Время жизни</param>
     /// <typeparam name="TBehavior">Перехватчик</typeparam>
-    /// <returns>Билдер</returns>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
     public RabbitMqConfigurationBuilder AddMessagePublisherBehavior<TBehavior>(ServiceLifetime? lifetime = Singleton)
         where TBehavior : IMessagePublishBehavior
     {
@@ -75,14 +91,14 @@ public class RabbitMqConfigurationBuilder
     /// <summary>
     /// Добавляет перехватчик отправки сообщения для сбора логов
     /// </summary>
-    /// <returns>Билдер</returns>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
     internal RabbitMqConfigurationBuilder AddLoggingMessagePublisherBehavior() =>
         AddMessagePublisherBehavior<LoggingMessagePublisherBehavior>();
 
     /// <summary>
     /// Добавляет перехватчик отправки сообщения для сбора метрик
     /// </summary>
-    /// <returns>Билдер</returns>
+    /// <returns>Билдер конфигурации RabbitMq</returns>
     internal RabbitMqConfigurationBuilder AddMetricsMessagePublisherBehavior() =>
         AddMessagePublisherBehavior<MetricsMessagePublisherBehavior>();
 

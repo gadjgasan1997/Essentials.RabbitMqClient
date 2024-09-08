@@ -1,51 +1,69 @@
 ﻿using Essentials.Utils.Extensions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Essentials.RabbitMqClient.Subscriber.Models;
 
 /// <summary>
 /// Опции подписки на очередь
 /// </summary>
-/// <param name="EventTypeName">Название типа события</param>
-/// <param name="HandlerTypeName">Тип обработчика сообщения</param>
-/// <param name="ContentType">Тип содержимого сообщения</param>
-/// <param name="PrefetchCount">Количество сообщений, которое может забрать подписчик</param>
-/// <param name="Correlation">Признак необходимости установить событие в задаче (RPC)</param>
-/// <param name="Behaviors">Список перехватчиков сообщения</param>
-internal record SubscriptionOptions(
-    string EventTypeName,
-    string? HandlerTypeName,
-    string ContentType,
-    ushort PrefetchCount,
-    bool Correlation,
-    List<Type> Behaviors)
+internal record SubscriptionOptions
 {
+    public SubscriptionOptions(
+        string eventTypeName,
+        string contentType,
+        ushort prefetchCount,
+        List<Type> behaviors)
+    {
+        EventTypeName = eventTypeName.CheckNotNullOrEmpty();
+        ContentType = contentType.CheckNotNullOrEmpty();
+        PrefetchCount = prefetchCount;
+        NeedCorrelation = true;
+        Behaviors = behaviors;
+    }
+    
+    public SubscriptionOptions(
+        string eventTypeName,
+        Type handlerType,
+        string contentType,
+        ushort prefetchCount,
+        List<Type> behaviors)
+    {
+        EventTypeName = eventTypeName.CheckNotNullOrEmpty();
+        HandlerType = handlerType.CheckNotNull();
+        ContentType = contentType.CheckNotNullOrEmpty();
+        PrefetchCount = prefetchCount;
+        NeedCorrelation = false;
+        Behaviors = behaviors;
+    }
+    
     /// <summary>
     /// Название типа события
     /// </summary>
-    public string EventTypeName { get; } = EventTypeName.CheckNotNullOrEmpty();
+    public string EventTypeName { get; }
     
     /// <summary>
-    /// Название типа обработчика события
+    /// Тип обработчика события
     /// </summary>
-    public string? HandlerTypeName { get; } = HandlerTypeName?.FullTrim();
+    public Type? HandlerType { get; }
     
     /// <summary>
     /// Тип содержимого сообщения
     /// </summary>
-    public string ContentType { get; } = ContentType.CheckNotNullOrEmpty();
+    public string ContentType { get; }
 
     /// <summary>
     /// Количество сообщений, которое может забрать подписчик
     /// </summary>
-    public ushort PrefetchCount { get; } = PrefetchCount;
+    public ushort PrefetchCount { get; }
 
     /// <summary>
     /// Признак необходимости установить событие в задаче (RPC)
     /// </summary>
-    public bool Correlation { get; } = Correlation;
+    [MemberNotNullWhen(false, nameof(HandlerType))]
+    public bool NeedCorrelation { get; }
     
     /// <summary>
     /// Список перехватчиков сообщения
     /// </summary>
-    public List<Type> Behaviors { get; } = Behaviors;
+    public List<Type> Behaviors { get; }
 }

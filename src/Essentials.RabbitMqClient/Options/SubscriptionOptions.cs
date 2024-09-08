@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Essentials.RabbitMqClient.Options;
 
 /// <summary>
-/// Опции подписки на очередь
+/// Опции подписки на событие
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global")]
 [SuppressMessage("ReSharper", "CollectionNeverUpdated.Global")]
@@ -45,10 +45,10 @@ internal class SubscriptionOptions
         [Required]
         public string TypeName { get; set; } = null!;
         
-        /// <summary>
-        /// Название типа ответа
+        /// <summary>   
+        /// Тип обработчика
         /// </summary>
-        public string? ResponseTypeName { get; set; }
+        public Type? HandlerType { get; set; }
         
         /// <summary>
         /// Название типа обработчика

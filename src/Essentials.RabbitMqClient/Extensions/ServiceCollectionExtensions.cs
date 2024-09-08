@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Essentials.Utils.Reflection.Helpers;
+using Essentials.Utils.Collections.Extensions;
 using Essentials.Serialization.Serializers;
 using Essentials.Serialization.Deserializers;
 using Essentials.RabbitMqClient.Context;
+using Essentials.RabbitMqClient.Configuration.Builders;
+using Essentials.RabbitMqClient.Configuration.Extensions;
 using Essentials.RabbitMqClient.Context.Implementations;
 using Essentials.RabbitMqClient.Dictionaries;
 using Essentials.RabbitMqClient.Metrics.Extensions;
@@ -11,6 +14,7 @@ using Essentials.RabbitMqClient.RabbitMqModelBuilder.Extensions;
 using Essentials.RabbitMqClient.Publisher.Extensions;
 using Essentials.RabbitMqClient.RabbitMqConnections.Extensions;
 using Essentials.RabbitMqClient.Subscriber.Extensions;
+using static Essentials.RabbitMqClient.Configuration.ConfigurationManager;
 using static Essentials.RabbitMqClient.Dictionaries.QueueLoggers;
 using static Essentials.Serialization.EssentialsDeserializersFactory;
 using static Essentials.Serialization.EssentialsSerializersFactory;
@@ -42,14 +46,24 @@ public static class ServiceCollectionExtensions
         
         try
         {
-            var assemblies = AssemblyHelpers.GetAllAssembliesWithReferences().ToArray();
+            var rabbitMqBuilder = new RabbitMqConfigurationBuilder()
+                .AddLoggingMessageHandlerBehavior()
+                .AddMetricsMessageHandlerBehavior()
+                .AddLoggingMessagePublisherBehavior()
+                .AddMetricsMessagePublisherBehavior();
+            
+            configureAction?.Invoke(rabbitMqBuilder);
             
             var connectionsOptions = configuration.GetConnectionsOptions();
             var connectionsToConfigure = connectionsOptions.Connections
                 .Where(connectionOptions => connectionOptions.Model is not null)
+                .Where(connectionOptions => !ConnectionsModels.ContainsKey(connectionOptions.Name))
                 .ToDictionary(
                     connectionOptions => connectionOptions.Name,
-                    connectionOptions => connectionOptions.Model!);
+                    connectionOptions => connectionOptions.Model!)
+                .Concat(ConnectionsModels);
+            
+            var assemblies = AssemblyHelpers.GetAllAssembliesWithReferences().ToArray();
             
             services
                 .AddSingleton<IContextService, ContextService>()
@@ -63,14 +77,6 @@ public static class ServiceCollectionExtensions
             AddByKey(KnownRabbitMqDeserializers.XML, () => new XmlDeserializer());
             AddByKey(KnownRabbitMqSerializers.JSON, () => new NativeJsonSerializer());
             AddByKey(KnownRabbitMqSerializers.XML, () => new XmlSerializer());
-
-            var rabbitMqBuilder = new RabbitMqConfigurationBuilder()
-                .AddLoggingMessageHandlerBehavior()
-                .AddMetricsMessageHandlerBehavior()
-                .AddLoggingMessagePublisherBehavior()
-                .AddMetricsMessagePublisherBehavior();
-            
-            configureAction?.Invoke(rabbitMqBuilder);
             
             RabbitMqConfigurationBuilder.RegisterBehaviors(services);
             

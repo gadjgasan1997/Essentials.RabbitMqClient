@@ -12,7 +12,7 @@
       <PackageReference Include="Essentials.Functional" Version="1.1.1" />
       <PackageReference Include="Essentials.Logging" Version="1.1.0" />
       <PackageReference Include="Essentials.Serialization" Version="1.1.0" />
-      <PackageReference Include="Essentials.Utils" Version="1.1.2" />
+      <PackageReference Include="Essentials.Utils" Version="1.1.3" />
       <PackageReference Include="Polly" Version="8.3.1" />
       <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
       <PackageReference Include="Scrutor" Version="4.2.2" />
@@ -21,7 +21,7 @@
 
     <PropertyGroup>
         <PackageId>Essentials.RabbitMqClient</PackageId>
-        <Version>1.2.1.0</Version>
+        <Version>1.2.4.0</Version>
         <Authors>Gadzhinskiy</Authors>
         <Company>Gadzhinskiy</Company>
         <Product>Essentials.RabbitMqClient</Product>

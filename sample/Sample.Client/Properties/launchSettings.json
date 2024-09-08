@@ -7,6 +7,8 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Debug",
         "ASPNETCORE_URLS": "http://*:2001;http://*:2002",
+        "APPLICATION_INSTANCE": "local",
+        "HOST_NAME": "localhost",
         "METRICS_HOST": "SAMPLE_HOST",
         "METRICS_PORT": "2002",
         "Loggers__Queue__Main__Level": "Info",

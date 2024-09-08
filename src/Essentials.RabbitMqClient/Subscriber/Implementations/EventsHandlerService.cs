@@ -1,7 +1,8 @@
-﻿using Essentials.Utils.Extensions;
+﻿using RabbitMQ.Client.Events;
+using System.Diagnostics.CodeAnalysis;
+using Essentials.Utils.Extensions;
 using Essentials.Serialization;
 using Essentials.Serialization.Helpers;
-using System.Diagnostics.CodeAnalysis;
 using Essentials.RabbitMqClient.Extensions;
 using Essentials.RabbitMqClient.Dictionaries;
 using Essentials.RabbitMqClient.Exceptions;
@@ -10,7 +11,6 @@ using Essentials.RabbitMqClient.Publisher;
 using Essentials.RabbitMqClient.Subscriber.MessageProcessing;
 using Essentials.RabbitMqClient.Subscriber.Models;
 using Microsoft.Extensions.DependencyInjection;
-using RabbitMQ.Client.Events;
 
 namespace Essentials.RabbitMqClient.Subscriber.Implementations;
 
@@ -56,7 +56,7 @@ internal class EventsHandlerService : IEventsHandlerService
         SubscriptionOptions options)
         where TEvent : IEvent
     {
-        var func = options.Correlation
+        var func = options.NeedCorrelation
             ? GetCorrelationEnabledHandler<TEvent>(options)
             : GetCorrelationDisabledHandler<TEvent>(options);
         
@@ -118,9 +118,7 @@ internal class EventsHandlerService : IEventsHandlerService
                 .SetAnswer(correlationId, @event)
                 .IfFailThrow();
 
-            return !string.IsNullOrWhiteSpace(options.HandlerTypeName)
-                ? BasicHandler(@event)
-                : Task.CompletedTask;
+            return Task.CompletedTask;
         };
     }
 
@@ -136,10 +134,7 @@ internal class EventsHandlerService : IEventsHandlerService
         return eventArgs =>
         {
             var @event = GetEvent<TEvent>(eventArgs.Body, options.ContentType);
-            
-            return !string.IsNullOrWhiteSpace(options.HandlerTypeName)
-                ? BasicHandler(@event)
-                : Task.CompletedTask;
+            return BasicHandler(@event);
         };
     }
     

@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Diagnostics.CodeAnalysis;
 using Essentials.Utils.Extensions;
 using Essentials.Utils.Reflection.Extensions;
 using Essentials.RabbitMqClient.Subscriber.Models;
@@ -26,49 +25,17 @@ internal static class ReflectionHelpers
         RegisterEventsHandlersOptions options,
         Assembly[] assemblies)
     {
-        if (string.IsNullOrWhiteSpace(options.HandlerTypeName))
-        {
-            MainLogger.Warn(
-                $"Для события {options.EventTypeName} " +
-                $"не указан собственный обработчик - будет использован базовый");
-            
-            return;
-        }
-        
-        RegisterHandler(
-            services,
-            assemblies,
-            options.EventTypeName,
-            options.HandlerTypeName);
-    }
-    
-    /// <summary>
-    /// Регистрирует обработчик
-    /// </summary>
-    /// <param name="services"></param>
-    /// <param name="assemblies">Список сборок</param>
-    /// <param name="eventTypeName">Название типа события</param>
-    /// <param name="handlerTypeName">Название типа обработчика события</param>
-    /// <exception cref="ArgumentNullException"></exception>
-    [SuppressMessage("ReSharper", "SuggestBaseTypeForParameter")]
-    private static void RegisterHandler(
-        IServiceCollection services,
-        Assembly[] assemblies,
-        string eventTypeName,
-        string handlerTypeName)
-    {
         try
         {
-            var eventType = assemblies.GetTypeByName(eventTypeName, StringComparison.InvariantCultureIgnoreCase);
+            var eventType = assemblies.GetTypeByName(options.EventTypeName, StringComparison.InvariantCultureIgnoreCase);
             var handlerDescriptionType = typeof(IEventHandler<>).MakeGenericType(eventType);
-            var handlerImplementationType = assemblies.GetTypeByName(handlerTypeName, StringComparison.InvariantCultureIgnoreCase);
             
-            RegisterHandler(services, handlerDescriptionType, handlerImplementationType);
+            RegisterHandler(services, handlerDescriptionType, options.HandlerType);
         }
         catch (Exception ex)
         {
             MainLogger.Error(ex,
-                $"Во время регистрации обработчика для события с типом '{eventTypeName}' произошло исключение.");
+                $"Во время регистрации обработчика для события с типом '{options.EventTypeName}' произошло исключение.");
 
             throw;
         }

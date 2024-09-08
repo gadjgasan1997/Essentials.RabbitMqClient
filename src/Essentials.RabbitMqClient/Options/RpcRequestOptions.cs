@@ -66,9 +66,9 @@ internal class RpcRequestOptions
         public string ReplyTo { get; set; } = null!;
 
         /// <summary>
-        /// Время ожидания ответов
+        /// Время ожидания ответов, в секундах
         /// </summary>
-        public int Timeout { get; set; }
+        public int? Timeout { get; set; }
         
         /// <summary>
         /// Список перехватчиков сообщения

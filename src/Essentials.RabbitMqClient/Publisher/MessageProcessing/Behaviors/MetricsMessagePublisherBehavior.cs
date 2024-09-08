@@ -6,10 +6,14 @@ namespace Essentials.RabbitMqClient.Publisher.MessageProcessing.Behaviors;
 /// <summary>
 /// Перехватчик отправки сообщения для сбора метрик
 /// </summary>
-internal class MetricsMessagePublisherBehavior : IMessagePublishBehavior
+public class MetricsMessagePublisherBehavior : IMessagePublishBehavior
 {
     private readonly IMetricsService _metricsService;
     
+    /// <summary>
+    /// Конструктор
+    /// </summary>
+    /// <param name="metricsService">Сервис управления метриками</param>
     public MetricsMessagePublisherBehavior(IMetricsService metricsService)
     {
         _metricsService = metricsService.CheckNotNull();

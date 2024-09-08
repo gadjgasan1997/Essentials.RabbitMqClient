@@ -39,14 +39,13 @@ public class LoggingMessagePublisherBehavior : IMessagePublishBehavior
         clock.Start();
         
         var publishKey = context.PublishKey;
-        var logger = GetLogger(context.ConnectionKey, publishKey);
+        var logger = GetLogger(context, context.ConnectionKey, publishKey);
         
         using var _ = logger.BeginScope(
             new Dictionary<string, object?>
             {
                 ["rabbit_message_id"] = Guid.NewGuid()
             });
-
         
         try
         { 
@@ -103,21 +102,36 @@ public class LoggingMessagePublisherBehavior : IMessagePublishBehavior
     /// <summary>
     /// Возвращает логгер
     /// </summary>
+    /// <param name="context">Контекст сообщения</param>
     /// <param name="connectionKey">Ключ соединения</param>
     /// <param name="publishKey">Ключ публикации события</param>
     /// <returns>Логгер</returns>
-    protected virtual ILogger GetLogger(ConnectionKey connectionKey, PublishKey publishKey)
+    private ILogger GetLogger(
+        MessageContext.Context context,
+        ConnectionKey connectionKey,
+        PublishKey publishKey)
     {
         return _loggersMap.GetOrAdd(
             (connectionKey, publishKey),
             _ =>
             {
-                var loggerName = $"Essentials.RabbitMqClient.PublishMessageBehavior." +
-                                 $"{connectionKey.ConnectionName}." +
-                                 $"{publishKey.Exchange}." +
-                                 $"{publishKey.RoutingKey?.Key}";
-
+                var loggerName = GetLoggerName(context);
                 return _factory.CreateLogger(loggerName);
             });
+    }
+    
+    /// <summary>
+    /// Возвращает название логгера
+    /// </summary>
+    /// <param name="context">Контекст сообщения</param>
+    /// <returns>Название логгера</returns>
+    protected virtual string GetLoggerName(MessageContext.Context context)
+    {
+        var connectionKey = context.ConnectionKey;
+        var publishKey = context.PublishKey;
+
+        return $"Essentials.RabbitMqClient.PublishMessageBehavior." +
+               $"{connectionKey.ConnectionName}." +
+               $"{publishKey.RoutingKey?.Key ?? publishKey.Exchange}";
     }
 }
