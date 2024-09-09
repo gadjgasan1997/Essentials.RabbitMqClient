@@ -25,7 +25,7 @@ internal class OptionsProvider : IOptionsProvider
         if (_connectionsOptions.ContainsKey(connectionKey))
             throw new InvalidOperationException($"Опции для соединения с ключом '{connectionKey}' уже существуют");
 
-        foreach (var (key, _) in rpcRequestsOptionsMap)
+        foreach (var (key, _) in publishOptionsMap)
         {
             if (_publishEventsToConnectionsMap.TryGetValue(key.EventKey, out var options))
                 options.Add(connectionKey);

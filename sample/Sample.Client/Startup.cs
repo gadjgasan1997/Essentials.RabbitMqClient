@@ -41,7 +41,7 @@ public class Startup
     private static void ConfigureEsbConnection(ConnectionBuilder connectionBuilder)
     {
         connectionBuilder.ConfigureRpc(builder =>
-            builder.ConfigureRpcRequestDefault<Models.Input, Models.Output>(
+            builder.ConfigureRpcRequestDefault<Models.Output, Models.Input>(
                 replyQueueName: "RabbitMqScaleTestOutput.{app_instance}",
                 publishRoutingKey: "RabbitMqScaleTestInput"));
     }

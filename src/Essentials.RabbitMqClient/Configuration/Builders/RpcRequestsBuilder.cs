@@ -97,8 +97,8 @@ public class RpcRequestsBuilder
     public RpcRequestsBuilder ConfigureRpcRequestDefault<TEvent, TResponse>(
         string replyQueueName,
         string publishRoutingKey,
-        Action<RpcRequestBuilder<TResponse>>? configurePublishEventAction = null,
-        Action<RpcResponseSubscriptionBuilder<TEvent>>? configureProcessingResponseAction = null)
+        Action<RpcRequestBuilder<TEvent>>? configurePublishEventAction = null,
+        Action<RpcResponseSubscriptionBuilder<TResponse>>? configureProcessingResponseAction = null)
         where TEvent : IEvent
         where TResponse : IEvent
     {
