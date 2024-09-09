@@ -19,26 +19,24 @@ public class TestService : ITestService
     
     public async Task SendRpcCallAsync()
     {
-        var result = await _eventsPublisher
+        _ = await _eventsPublisher
             .AskAsync<Output, Input>(
                 new Output
                 {
                     Name = "Ivan"
                 },
-                CancellationToken.None);
-
-        _ = result
+                CancellationToken.None)
             .Match(
                 Succ: input =>
                 {
                     _logger.LogInformation("Ответ на Rpc вызов: " + JsonHelpers.Serialize(input));
-                    
+
                     return Unit.Default;
                 },
                 Fail: exception =>
                 {
                     _logger.LogError(exception, "Ошибка осуществления Rpc вызова");
-                    
+
                     return Unit.Default;
                 });
     }

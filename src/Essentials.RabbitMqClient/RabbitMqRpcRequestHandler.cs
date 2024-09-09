@@ -32,7 +32,9 @@ public class RabbitMqRpcRequestHandler<TEvent, TResponse> : IEventHandler<TEvent
     {
         var response = await _mediator.Send(request);
         response.CheckNotNull("Ответ для отдачи на rpc запрос не может быть null");
-        
-        _publisher.PublishRpcResponse(response);
+
+        _ = _publisher
+            .PublishRpcResponse(response)
+            .IfFail(exception => throw exception);
     }
 }

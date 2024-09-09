@@ -1,10 +1,10 @@
 ﻿using Polly;
+using LanguageExt;
 using Essentials.Utils.Extensions;
 using Essentials.Serialization;
 using System.Net.Sockets;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
-using LanguageExt.Common;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
 using Essentials.RabbitMqClient.Extensions;
@@ -52,190 +52,190 @@ internal class EventsPublisher : IEventsPublisher
     }
 
     /// <inheritdoc cref="IEventsPublisher.Publish{TEvent}(TEvent)" />
-    public void Publish<TEvent>(TEvent @event)
+    public Try<Unit> Publish<TEvent>(TEvent @event)
         where TEvent : IEvent
     {
-        var eventKey = EventKey.New<TEvent>();
-        
-        var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey);
-        var exchange = _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
+        return () =>
+        {
+            var eventKey = EventKey.New<TEvent>();
 
-        var key = _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
+            var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey);
+            var exchange = _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
 
-        var routingKey = RoutingKey.New(key);
-        var publishKey = PublishKey.New(exchange, eventKey, routingKey);
-        var publishOptions = _provider.GetPublishOptions(connectionKey, publishKey);
-        
-        PublishPrivate(
-            @event,
-            connectionKey,
-            publishKey,
-            publishOptions.Behaviors,
-            publishOptions.ContentType,
-            publishOptions.RetryCount,
-            propertiesFunc: channel =>
-            {
-                var properties = channel.CreateBasicProperties();
-                properties.DeliveryMode = publishOptions.DeliveryMode;
-                return properties;
-            });
+            var key = _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
+
+            var routingKey = RoutingKey.New(key);
+            var publishKey = PublishKey.New(exchange, eventKey, routingKey);
+            var publishOptions = _provider.GetPublishOptions(connectionKey, publishKey);
+
+            PublishPrivate(
+                @event,
+                connectionKey,
+                publishKey,
+                publishOptions.Behaviors,
+                publishOptions.ContentType,
+                publishOptions.RetryCount,
+                propertiesFunc: channel =>
+                {
+                    var properties = channel.CreateBasicProperties();
+                    properties.DeliveryMode = publishOptions.DeliveryMode;
+                    return properties;
+                });
+
+            return Unit.Default;
+        };
     }
 
     /// <inheritdoc cref="IEventsPublisher.Publish{TEvent}(TEvent, PublishParams)" />
-    public void Publish<TEvent>(TEvent @event, PublishParams publishParams)
+    public Try<Unit> Publish<TEvent>(TEvent @event, PublishParams publishParams)
         where TEvent : IEvent
     {
-        var eventKey = EventKey.New<TEvent>();
-        
-        var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey, publishParams);
-        var exchange = publishParams.Exchange ?? _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
-        var key = publishParams.RoutingKey ?? _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
+        return () =>
+        {
+            var eventKey = EventKey.New<TEvent>();
 
-        var routingKey = RoutingKey.New(key);
-        var publishKey = PublishKey.New(exchange, eventKey, routingKey);
-        var publishOptions = _provider.GetPublishOptions(connectionKey, publishKey);
+            var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey, publishParams);
+            var exchange = publishParams.Exchange ?? _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
+            var key = publishParams.RoutingKey ?? _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
 
-        PublishPrivate(
-            @event,
-            connectionKey,
-            publishKey,
-            publishOptions.Behaviors,
-            publishOptions.ContentType,
-            publishOptions.RetryCount,
-            propertiesFunc: channel =>
-            {
-                var properties = channel.CreateBasicProperties();
-                properties.DeliveryMode = publishOptions.DeliveryMode;
-                return properties;
-            });
+            var routingKey = RoutingKey.New(key);
+            var publishKey = PublishKey.New(exchange, eventKey, routingKey);
+            var publishOptions = _provider.GetPublishOptions(connectionKey, publishKey);
+
+            PublishPrivate(
+                @event,
+                connectionKey,
+                publishKey,
+                publishOptions.Behaviors,
+                publishOptions.ContentType,
+                publishOptions.RetryCount,
+                propertiesFunc: channel =>
+                {
+                    var properties = channel.CreateBasicProperties();
+                    properties.DeliveryMode = publishOptions.DeliveryMode;
+                    return properties;
+                });
+            
+            return Unit.Default;
+        };
     }
 
     /// <inheritdoc cref="IEventsPublisher.PublishRpcResponse{TEvent}(TEvent)" />
-    public void PublishRpcResponse<TEvent>(TEvent @event)
+    public Try<Unit> PublishRpcResponse<TEvent>(TEvent @event)
         where TEvent : IEvent
     {
-        var context = SubscribeMessageContext.Current
-            .CheckNotNull(
-                "Не инициализирован контекст для отдачи ответа",
-                "MessageContext.Current");
-        
-        var eventKey = EventKey.New<TEvent>();
-        
-        var connectionKey = context.ConnectionKey;
-        var exchange = _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
+        return () =>
+        {
+            var context = SubscribeMessageContext.Current
+                .CheckNotNull(
+                    "Не инициализирован контекст для отдачи ответа",
+                    "MessageContext.Current");
 
-        var replyTo = context.EventArgs
-            .GetReplyTo()
-            .IfNone(() => throw new InvalidOperationException(
-                "Не указан параметр ReplyTo в аргументах события для публикации ответа. " +
-                $"Параметры события: '{Serialize(context.EventArgs)}'"));
-        
-        var correlationId = context.EventArgs
-            .GetCorrelationId()
-            .IfNone(() => throw new InvalidOperationException(
-                "Не указан параметр CorrelationId в аргументах события для публикации ответа. " +
-                $"Параметры события: '{Serialize(context.EventArgs)}'"));
+            var eventKey = EventKey.New<TEvent>();
 
-        var routingKey = RoutingKey.New(replyTo);
-        var publishKey = PublishKey.New(exchange, eventKey, routingKey);
-        
-        // Поиск опций публикации осуществляется без replyTo, так как данный параметр неизвестен
-        // на этапе запуска сервиса, а приходит от сторонней системы.
-        // Соответственно, опций публикации для такого ключа маршрутизации не будет в конфигурации сервиса
-        var publishOptions = _provider.GetPublishOptions(connectionKey, PublishKey.New(exchange, eventKey));
+            var connectionKey = context.ConnectionKey;
+            var exchange = _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
 
-        PublishPrivate(
-            @event,
-            connectionKey,
-            publishKey,
-            publishOptions.Behaviors,
-            publishOptions.ContentType,
-            publishOptions.RetryCount,
-            propertiesFunc: channel =>
-            {
-                var properties = channel.CreateBasicProperties();
-                properties.DeliveryMode = publishOptions.DeliveryMode;
-                properties.CorrelationId = correlationId;
-                return properties;
-            });
+            var replyTo = context.EventArgs
+                .GetReplyTo()
+                .IfNone(() => throw new InvalidOperationException(
+                    "Не указан параметр ReplyTo в аргументах события для публикации ответа. " +
+                    $"Параметры события: '{Serialize(context.EventArgs)}'"));
+
+            var correlationId = context.EventArgs
+                .GetCorrelationId()
+                .IfNone(() => throw new InvalidOperationException(
+                    "Не указан параметр CorrelationId в аргументах события для публикации ответа. " +
+                    $"Параметры события: '{Serialize(context.EventArgs)}'"));
+
+            var routingKey = RoutingKey.New(replyTo);
+            var publishKey = PublishKey.New(exchange, eventKey, routingKey);
+
+            // Поиск опций публикации осуществляется без replyTo, так как данный параметр неизвестен
+            // на этапе запуска сервиса, а приходит от сторонней системы.
+            // Соответственно, опций публикации для такого ключа маршрутизации не будет в конфигурации сервиса
+            var publishOptions = _provider.GetPublishOptions(connectionKey, PublishKey.New(exchange, eventKey));
+
+            PublishPrivate(
+                @event,
+                connectionKey,
+                publishKey,
+                publishOptions.Behaviors,
+                publishOptions.ContentType,
+                publishOptions.RetryCount,
+                propertiesFunc: channel =>
+                {
+                    var properties = channel.CreateBasicProperties();
+                    properties.DeliveryMode = publishOptions.DeliveryMode;
+                    properties.CorrelationId = correlationId;
+                    return properties;
+                });
+
+            return Unit.Default;
+        };
     }
 
     /// <inheritdoc cref="IEventsPublisher.AskAsync{TEvent, TAnswer}(TEvent, CancellationToken)" />
-    public async Task<Result<TAnswer>> AskAsync<TEvent, TAnswer>(TEvent @event, CancellationToken token)
+    public TryAsync<TAnswer> AskAsync<TEvent, TAnswer>(TEvent @event, CancellationToken token)
         where TEvent : IEvent
         where TAnswer : IEvent
     {
-        return await TryAsync(async () =>
-            {
-                var eventKey = EventKey.New<TEvent>();
-        
-                var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey);
-                var exchange = _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
-                var key = _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
-        
-                var routingKey = RoutingKey.New(key);
-                var publishKey = PublishKey.New(exchange, eventKey, routingKey);
-                var rpcRequestOptions = _provider.GetRpcRequestOptions(connectionKey, publishKey);
-            
-                if (token is { CanBeCanceled: true, IsCancellationRequested: true })
-                    throw new InvalidAskAttemptException("Публикация сообщения была отменена");
+        return TryAsync(async () =>
+        {
+            var eventKey = EventKey.New<TEvent>();
 
-                var result = await AskAsyncPrivate(
-                    @event,
-                    connectionKey,
-                    publishKey,
-                    rpcRequestOptions);
-                
-                return (TAnswer) result;
-            })
-            .Map(result => new Result<TAnswer>(result))
-            .IfFail(exception =>
-            {
-                _logger.LogWarning(exception, "Произошла ошибка при попытке получить ответ из очереди");
-                return new Result<TAnswer>(exception);
-            });
+            var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey);
+            var exchange = _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
+            var key = _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
+
+            var routingKey = RoutingKey.New(key);
+            var publishKey = PublishKey.New(exchange, eventKey, routingKey);
+            var rpcRequestOptions = _provider.GetRpcRequestOptions(connectionKey, publishKey);
+
+            if (token is {CanBeCanceled: true, IsCancellationRequested: true})
+                throw new InvalidAskAttemptException("Публикация сообщения была отменена");
+
+            var result = await AskAsyncPrivate(
+                @event,
+                connectionKey,
+                publishKey,
+                rpcRequestOptions);
+
+            return (TAnswer) result;
+        });
     }
 
     /// <inheritdoc cref="IEventsPublisher.AskAsync{TEvent, TAnswer}(TEvent, PublishParams, CancellationToken)" />
-    public async Task<Result<TAnswer>> AskAsync<TEvent, TAnswer>(
+    public TryAsync<TAnswer> AskAsync<TEvent, TAnswer>(
         TEvent @event,
         PublishParams publishParams,
         CancellationToken token)
         where TEvent : IEvent
         where TAnswer : IEvent
     {
-        return await TryAsync(async () =>
-            {
-                var eventKey = EventKey.New<TEvent>();
+        return TryAsync(async () =>
+        {
+            var eventKey = EventKey.New<TEvent>();
 
-                var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey, publishParams);
-                var exchange = publishParams.Exchange ?? _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
-                var key = publishParams.RoutingKey ?? _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
+            var connectionKey = _provider.GetConnectionKeyForPublishEvent(eventKey, publishParams);
+            var exchange = publishParams.Exchange ?? _provider.GetExchangeForPublishEvent(connectionKey, eventKey);
+            var key = publishParams.RoutingKey ?? _provider.GetRoutingKeyForPublishEvent(connectionKey, eventKey);
 
-                var routingKey = RoutingKey.New(key);
-                var publishKey = PublishKey.New(exchange, eventKey, routingKey);
-                var rpcRequestOptions = _provider.GetRpcRequestOptions(connectionKey, publishKey);
+            var routingKey = RoutingKey.New(key);
+            var publishKey = PublishKey.New(exchange, eventKey, routingKey);
+            var rpcRequestOptions = _provider.GetRpcRequestOptions(connectionKey, publishKey);
 
-                if (token is { CanBeCanceled: true, IsCancellationRequested: true })
-                    throw new InvalidAskAttemptException("Публикация сообщения была отменена");
+            if (token is {CanBeCanceled: true, IsCancellationRequested: true})
+                throw new InvalidAskAttemptException("Публикация сообщения была отменена");
 
-                var result = await AskAsyncPrivate(
-                    @event,
-                    connectionKey,
-                    publishKey,
-                    rpcRequestOptions);
-                
-                return (TAnswer) result;
-            })
-            .Map(result => new Result<TAnswer>(result))
-            .IfFail(exception =>
-            {
-                _logger.LogWarning(
-                    exception,
-                    $"Произошла ошибка при попытке получить ответ из очереди с параметрами: {Serialize(publishParams)}");
+            var result = await AskAsyncPrivate(
+                @event,
+                connectionKey,
+                publishKey,
+                rpcRequestOptions);
 
-                return new Result<TAnswer>(exception);
-            });
+            return (TAnswer) result;
+        });
     }
 
     private async Task<IEvent> AskAsyncPrivate<TEvent>(

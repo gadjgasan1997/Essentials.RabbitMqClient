@@ -1,4 +1,4 @@
-﻿using LanguageExt.Common;
+﻿using LanguageExt;
 using Essentials.RabbitMqClient.Publisher.Models;
 
 namespace Essentials.RabbitMqClient.Publisher;
@@ -13,7 +13,7 @@ public interface IEventsPublisher
     /// </summary>
     /// <param name="event">Событие</param>
     /// <typeparam name="TEvent">Тип события</typeparam>
-    void Publish<TEvent>(TEvent @event) where TEvent : IEvent;
+    Try<Unit> Publish<TEvent>(TEvent @event) where TEvent : IEvent;
 
     /// <summary>
     /// Публикует сообщение в очередь
@@ -21,14 +21,14 @@ public interface IEventsPublisher
     /// <param name="event">Событие</param>
     /// <param name="publishParams">Параметры публикации сообщения</param>
     /// <typeparam name="TEvent">Тип события</typeparam>
-    void Publish<TEvent>(TEvent @event, PublishParams publishParams) where TEvent : IEvent;
+    Try<Unit> Publish<TEvent>(TEvent @event, PublishParams publishParams) where TEvent : IEvent;
 
     /// <summary>
     /// Публикует ответ на Rpc вызов в очередь
     /// </summary>
     /// <param name="event">Событие</param>
     /// <typeparam name="TEvent">Тип события</typeparam>
-    void PublishRpcResponse<TEvent>(TEvent @event) where TEvent : IEvent;
+    Try<Unit> PublishRpcResponse<TEvent>(TEvent @event) where TEvent : IEvent;
 
     /// <summary>
     /// Публикует сообщение в очередь и ждет асинхронно ответ
@@ -38,7 +38,7 @@ public interface IEventsPublisher
     /// <param name="token">Токен отмены</param>
     /// <typeparam name="TEvent">Тип события</typeparam>
     /// <typeparam name="TAnswer">Тип входящего события</typeparam>
-    Task<Result<TAnswer>> AskAsync<TEvent, TAnswer>(TEvent @event, CancellationToken token)
+    TryAsync<TAnswer> AskAsync<TEvent, TAnswer>(TEvent @event, CancellationToken token)
         where TEvent : IEvent
         where TAnswer : IEvent;
 
@@ -51,7 +51,7 @@ public interface IEventsPublisher
     /// <param name="token">Токен отмены</param>
     /// <typeparam name="TEvent">Тип события</typeparam>
     /// <typeparam name="TAnswer">Тип входящего события</typeparam>
-    Task<Result<TAnswer>> AskAsync<TEvent, TAnswer>(
+    TryAsync<TAnswer> AskAsync<TEvent, TAnswer>(
         TEvent @event,
         PublishParams publishParams,
         CancellationToken token)
